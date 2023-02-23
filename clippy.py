@@ -1,7 +1,7 @@
 import argparse
 import classes as cl
 from json import load
-from pandas import read_excel
+from pandas import read_csv
 from re import match
 from sys import exit
 
@@ -18,7 +18,7 @@ if config["input"] is None:
   print("Video clip id:")
   config["input"] = input()
 
-df = read_excel("clips.xlsx", sheet_name = "clips")
+df = read_csv("clips.csv")
 # print(df.to_markdown())
 
 if not config["input"] in df.id.values:
