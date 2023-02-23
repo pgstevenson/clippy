@@ -1,0 +1,42 @@
+{
+  "_comment1":"Integer values of uri/token/path map to secrets.json",
+  "extract":[
+    {
+      "idx":0, 
+      "name":"Local",
+      "desciption":"Load a video file that is saved on the local drive.",
+      "uri":0,
+      "method":"ExtractLocal"
+    }
+  ],
+  "transform":[
+    {
+      "idx":0,
+      "name":"mp3",
+      "path":1,
+      "description":"Extracts the audio from a clip and saves as .mp3.",
+      "method":"rip"
+    },
+    {
+      "idx":1,
+      "name":"mp4",
+      "path":1,
+      "description":"Saves the videio as a .mp4 file.",
+      "method":"crop"
+    },
+    {
+      "idx":2,
+      "name":"mp3-4",
+      "path":1,
+      "description":"Saves the videio as a .mp4 file and also rips the audio and saves as .mp3.",
+      "method":"cropAndRip"
+    }
+  ],
+  "load":[
+    {
+      "idx":0,
+      "name":"Do nothing",
+      "description":"Don't load the file anywhere."
+    }
+  ]
+}
