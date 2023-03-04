@@ -54,6 +54,7 @@ data_raw/*
 ###############
 standard.Rproj
 secrets.json
+man/*.html
 
 # Do not ignore #
 #################
