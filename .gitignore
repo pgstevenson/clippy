@@ -45,11 +45,16 @@ Thumbs.db
 
 # Project directories #
 #######################
-data/
-data_raw/
 __pycache__/
+assets/*
+data/*
+data_raw/*
 
 # Other files #
 ###############
 standard.Rproj
 secrets.json
+
+# Do not ignore #
+#################
+!*/placeholder.txt
