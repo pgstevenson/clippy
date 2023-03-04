@@ -22,13 +22,13 @@
     {
       "idx":2,
       "name":"mp4",
-      "description":"Saves the videio as a .mp4 file.",
+      "description":"Saves the video as a .mp4 file.",
       "method":"crop"
     },
     {
       "idx":3,
       "name":"mp3-4",
-      "description":"Saves the videio as a .mp4 file and also rips the audio and saves as .mp3.",
+      "description":"Saves the video as a .mp4 file and also rips the audio and saves as .mp3.",
       "method":"cropAndRip"
     }
   ],
