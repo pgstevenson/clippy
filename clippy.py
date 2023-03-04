@@ -1,12 +1,14 @@
 import argparse
 import classes as cl
+from datetime import datetime
 from json import load
-from pandas import read_csv
-from re import match
+import os
+import pandas as pd
+import re
 from sys import exit
 
 def validTimestamp(x):
-  return bool(match("^\\d*:\\d*:\\d*(\\.\\d*)?$", x))
+  return bool(re.match("^\\d*:\\d*:\\d*(\\.\\d*)?$", x))
 
 parser = argparse.ArgumentParser(description="Crop a video file and rip the audio track",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -18,11 +20,11 @@ if config["input"] is None:
   print("Video clip id:")
   config["input"] = input()
 
-df = read_csv("clips.csv")
-# print(df.to_markdown())
-
+df = pd.read_csv("clips.csv")
+df.id = df.id.astype(str)
 if not config["input"] in df.id.values:
   exit("ID not found. Exiting.")
+episode = df.query("id == @config['input']").to_dict("records")[0]
 
 f = open('conf.json')
 etl = load(f)
@@ -33,19 +35,13 @@ secrets = load(f)
 f.close()
 
 # Extract
-
-match df["e"][df.id == config["input"]][0]:
-  case 0:
-    e = cl.ExtractLocal(secrets[str(etl["extract"][0]["uri"])])
     
-print(e.uri)
-    
-clip = cl.Clip( config["input"], 
-                e.uri, 
-                None,
-                df["uri"][df.id == config["input"]][0], 
-                df["start_time"][df.id == config["input"]][0],
-                df["end_time"][df.id == config["input"]][0])
+clip = cl.Clip( config["input"],
+                secrets["0"], 
+                episode["filename"], 
+                secrets["1"],
+                episode["start_time"],
+                episode["end_time"])
 
 if not validTimestamp(clip.start):
   exit("Invalid start time.")
@@ -56,19 +52,64 @@ if clip.endTimestamp <= clip.startTimestamp:
 
 # Transform
 
-match df["t"][df.id == config["input"]][0]:
+match episode["t"]:
   case 0:
-    clip.outLoc = secrets[str(etl["transform"][0]["path"])]
-    clip.rip()
+    pass
   case 1:
-    clip.outLoc = secrets[str(etl["transform"][1]["path"])]
-    clip.crop()
+    clip.rip()
   case 2:
-    clip.outLoc = secrets[str(etl["transform"][2]["path"])]
+    clip.crop()
+  case 3:
     clip.cropAndRip()
+  case _:
+    exit("Not a valid tranform 't' method.")
 
 # Load
 
-match df["l"][df.id == config["input"]][0]:
+match episode["l"]:
   case 0:
     l = 99
+  case 1:
+    if not os.path.isfile(clip.uri_mp3):
+      exit("Load: Podbeans: mp3 file does not exist.")
+    uri_logo = os.path.join(secrets["2"], episode["episode_logo"])
+    if not os.path.isfile(uri_logo):
+      exit("Load: Podbeans: Logo does not exist.")
+    uri_content = os.path.join(secrets["2"], episode["content"])
+    if os.path.isfile(uri_content):
+      with open(uri_content) as f:
+        content = f.read()
+      f.close()
+    else:
+      exit("Load: Podbeans: Content file does not exist.")
+    # check for content asset, if exists read file
+    l = cl.Podbean( etl["load"][1]["url_token"],
+                    etl["load"][1]["url_upload"],
+                    etl["load"][1]["url_episode"],
+                    secrets[str(etl["load"][1]["client_id"])],
+                    secrets[str(etl["load"][1]["client_secret"])],
+                    episode["title"],
+                    content,
+                    episode["status"],
+                    episode["type"])
+                    
+    l.requestToken()
+    
+    media = l.uploadAuth(clip.uri_mp3, "auido/mpeg")
+    l.media_key = media["file_key"]
+    l.upload(media["presigned_url"], clip.uri_mp3, "audio/mpeg")
+      
+    if bool(re.match("^.*jp(g|eg)$", uri_logo)):
+      logo = l.uploadAuth(uri_logo, "image/jpeg")
+      l.logo_key = logo["file_key"]
+      l.upload(logo["presigned_url"], uri_logo, "image/jpeg")
+      
+    if bool(re.match("^.*png$", uri_logo)):
+      logo = l.uploadAuth(uri_logo, "image/png")
+      l.logo_key = logo["file_key"]
+      l.upload(logo["presigned_url"], uri_logo, "image/png")
+      
+    l.publish()
+    
+  case _:
+    exit("Not a valid load 'l' method.")

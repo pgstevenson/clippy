@@ -1,2 +1,2 @@
-id,e,t,l,uri,start_time,end_time
-20230220_10AM,0,0,0,PXL_20230203_230740245.TS.mp4,00:00:10,00:00:15
+id,t,l,filename,start_time,end_time,title,content,status,type,episode_logo
+1,1,1,PXL_20230203_230740245.TS.mp4,00:00:10,00:00:20,My 9th podcast,content_1.txt,publish,public,AllahupanoDaynight_2000x2000.jpg

@@ -1,6 +1,9 @@
+from datetime import datetime
+from json import dumps
 from moviepy.editor import *
 from numpy import dot
 import os
+import requests
 from shutil import rmtree
 
 class ExtractLocal:
@@ -8,25 +11,29 @@ class ExtractLocal:
     self.uri = uri
 
 class Clip:
-  def __init__(self, id, inLoc, outLoc, filename, start, end):
+  def __init__(self, id, inLoc, filename, outLoc, start, end):
     self.id = id
     self.inLoc = inLoc
-    self.outLoc = outLoc
     self.filename = filename
+    self.outLoc = outLoc
     self.start = start
     self.end = end
     
   @property
-  def inPath(self):
+  def uri_in(self):
     return os.path.join(self.inLoc, self.filename)
   
   @property
-  def outPath(self):
+  def uri_out(self):
     return os.path.join(self.outLoc, self.id)
   
   @property
-  def outFile(self):
-    return os.path.join(self.outPath, self.id)
+  def uri_mp3(self):
+    return os.path.join(self.uri_out, self.id + ".mp3")
+  
+  @property
+  def uri_mp4(self):
+    return os.path.join(self.uri_out, self.id + ".mp4")
   
   @property
   def startTimestamp(self):
@@ -37,35 +44,104 @@ class Clip:
     return parseTime(self.end)
   
   def createDir(self):
-    if os.path.exists(self.outPath):
+    if os.path.exists(self.uri_out):
       print(f"Output directory '{self.id}' is not empty, continue? [Enter 'y' for yes.]")
       fl = input()
       if not (fl in ["Y", "y"] or len(fl) == 0):
         exit()
-    rmtree(self.outPath)
-    if not os.path.exists(self.outPath):
-      os.mkdir(self.outPath)
+      rmtree(self.uri_out)
+    if not os.path.exists(self.uri_out):
+      os.mkdir(self.uri_out)
   
   def clip(self):
-    x = VideoFileClip(self.inPath)
+    x = VideoFileClip(self.uri_in)
     return x.subclip(self.startTimestamp, self.endTimestamp) # seconds
 
   def crop(self):
     self.createDir()
-    self.clip().write_videofile(self.outFile + ".mp4")
+    self.clip().write_videofile(self.uri_mp4)
     return 99
   
   def rip(self):
     self.createDir()
-    self.clip().audio.write_audiofile(self.outFile + ".mp3")
+    self.clip().audio.write_audiofile(self.uri_mp3)
     return 99
   
   def cropAndRip(self):
     self.createDir()
-    self.clip().audio.write_audiofile(self.outFile + ".mp3")
-    self.clip().write_videofile(self.outFile + ".mp4")
+    self.clip().audio.write_audiofile(self.uri_mp3)
+    self.clip().write_videofile(self.uri_mp4)
     return 99
-
+  
+class Podbean:
+  def __init__(self, token_endpoint, upload_endpoint, episode_endpoint, client_id, client_secret, title, content, status, type):
+    self.token_endpoint = token_endpoint
+    self.upload_endpoint = upload_endpoint
+    self.episode_endpoint = episode_endpoint
+    self.client_id = client_id
+    self.client_secret = client_secret
+    self.title = title
+    self.content = content
+    self.status = status
+    self.type = type
+    self.token = None
+    self.media_key = None
+    self.logo_key = None
+    
+  def requestToken(self):
+    params = {"grant_type": "client_credentials"}
+    r = requests.post( self.token_endpoint,
+                          auth = (self.client_id, self.client_secret),
+                          data = params)
+    print(datetime.now(), f" Token request status code: {r.status_code}")
+    x = r.json()
+    self.token = x["access_token"]
+    if r.status_code != 200:
+      print(x["error"])
+      print(x["error_description"])
+    return 0
+  
+  def uploadAuth(self, file, content_type):
+    params = {"access_token": self.token,
+              "filename": os.path.basename(file),
+              "filesize": os.path.getsize(file),
+              "content_type": content_type}
+    r = requests.get(self.upload_endpoint, params = params)
+    x = r.json()
+    print(datetime.now(), f" Authorise file upload status code: {r.status_code}")
+    if r.status_code != 200:
+      print(x["error"])
+      print(x["error_description"])
+    return x
+  
+  def upload(self, url, file, content_type):
+    headers = {"Content-Type": content_type}
+    files = {"file": (os.path.basename(file), open(file,'rb'))}
+    r = requests.put(url, headers = headers, files = files)
+    print(datetime.now(), f" {os.path.basename(file)} Upload status code: {r.status_code}")
+    if r.status_code != 200:
+      x = r.json()
+      print(x["error"])
+      print(x["error_description"])
+    return 0
+  
+  def publish(self):
+    data = {"access_token": self.token,
+              "title": self.title,
+              "content": self.content,
+              "status": self.status,
+              "type": self.type}
+    if self.media_key is not None:
+      data["media_key"] = self.media_key
+    if self.logo_key is not None:
+      data["logo_key"] = self.logo_key
+    r = requests.post(self.episode_endpoint, data = data)
+    print(datetime.now(), f" Episode status code: {r.status_code}")
+    if r.status_code != 200:
+      x = r.json()
+      print(x["error"])
+      print(x["error_description"])
+    
 def parseTime(x): # takes time in "HH:MM:SS" format and converts to seconds
     a = [int(i) for i in x.split(":", 3)]
     b = [3600, 60, 1]
