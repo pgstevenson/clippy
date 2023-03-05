@@ -1,9 +1,8 @@
 import argparse
 import classes as cl
 from datetime import datetime
-from json import load
+import json
 import os
-import pandas as pd
 import re
 from sys import exit
 
@@ -12,31 +11,28 @@ def validTimestamp(x):
 
 parser = argparse.ArgumentParser(description="Crop a video file and rip the audio track",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument("-i", "--input", help="video clip id")
+parser.add_argument("-j", "--json", help = "video clip json config")
 args = parser.parse_args()
 config = vars(args)
 
-if config["input"] is None:
-  print("Video clip id:")
-  config["input"] = input()
+if config["json"] is None:
+  exit("Missing input JSON parameters.")
 
-df = pd.read_csv("clips.csv")
-df.id = df.id.astype(str)
-if not config["input"] in df.id.values:
-  exit("ID not found. Exiting.")
-episode = df.query("id == @config['input']").to_dict("records")[0]
+episode = json.loads(config["json"])
+episode["t"] = int(episode["t"])
+episode["l"] = int(episode["l"])
 
 f = open('conf.json')
-etl = load(f)
+etl = json.load(f)
 f.close()
 
 f = open('secrets.json')
-secrets = load(f)
+secrets = json.load(f)
 f.close()
 
 # Extract
     
-clip = cl.Clip( config["input"],
+clip = cl.Clip( episode["id"],
                 secrets["0"], 
                 episode["filename"], 
                 secrets["1"],
