@@ -49,6 +49,7 @@ __pycache__/
 assets/*
 data/*
 data_raw/*
+.idea/*
 
 # Other files #
 ###############
@@ -57,6 +58,7 @@ secrets.json
 man/*.html
 man/*.pdf
 clips.xlsm
+
 
 # Do not ignore #
 #################
