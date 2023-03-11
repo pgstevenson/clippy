@@ -17,7 +17,8 @@
       "idx":1,
       "name":"mp3",
       "description":"Extracts the audio from a clip and saves as .mp3.",
-      "method":"rip"
+      "method":"rip",
+      "intro_filename":"Church intro.wav"
     },
     {
       "idx":2,

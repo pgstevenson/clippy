@@ -63,9 +63,11 @@ class Clip:
         self.clip().write_videofile(self.uri_mp4)
         return 99
 
-    def rip(self):
+    def rip(self, intro_path):
         self.create_directory()
-        self.clip().audio.write_audiofile(self.uri_mp3)
+        intro_clip = AudioFileClip(intro_path)
+        concat = concatenate_audioclips([intro_clip, self.clip().audio])
+        concat.write_audiofile(self.uri_mp3)
         return 99
 
     def crop_and_rip(self):

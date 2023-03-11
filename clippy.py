@@ -56,7 +56,9 @@ match episode["t"]:
     case 0:
         pass
     case 1:
-        clip.rip()
+        intro_path = etl["transform"][1]["intro_filename"]
+        intro_path = os.path.join(secrets["2"], intro_path)
+        clip.rip(intro_path)
     case 2:
         clip.crop()
     case 3:
