@@ -63,10 +63,11 @@ class Clip:
         self.clip().write_videofile(self.uri_mp4)
         return 99
 
-    def rip(self, intro_path):
+    def rip(self, intro_path, outro_path):
         self.create_directory()
         intro_clip = AudioFileClip(intro_path)
-        concat = concatenate_audioclips([intro_clip, self.clip().audio])
+        outro_clip = AudioFileClip(outro_path)
+        concat = concatenate_audioclips([intro_clip, self.clip().audio, outro_clip])
         concat.write_audiofile(self.uri_mp3)
         return 99
 
@@ -79,7 +80,7 @@ class Clip:
 
 class Podbean:
     def __init__(self, token_endpoint, upload_endpoint, episode_endpoint, client_id, client_secret, title, content,
-                 status, publish_type):
+                 status, publish_type, logo_url):
         self.token_endpoint = token_endpoint
         self.upload_endpoint = upload_endpoint
         self.episode_endpoint = episode_endpoint
@@ -91,7 +92,7 @@ class Podbean:
         self.type = publish_type
         self.token = None
         self.media_key = None
-        self.logo_key = None
+        self.remote_logo_url = logo_url
 
     def request_token(self):
         params = {"grant_type": "client_credentials"}
@@ -127,8 +128,8 @@ class Podbean:
                 "type": self.type}
         if self.media_key is not None:
             data["media_key"] = self.media_key
-        if self.logo_key is not None:
-            data["logo_key"] = self.logo_key
+        if self.remote_logo_url is not None:
+            data["remote_logo_url"] = self.remote_logo_url
         r = requests.post(self.episode_endpoint, data=data)
         print(datetime.now(), f" Episode status code: {r.status_code}")
         if r.status_code != 200:

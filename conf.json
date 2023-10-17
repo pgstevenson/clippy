@@ -18,7 +18,8 @@
       "name":"mp3",
       "description":"Extracts the audio from a clip and saves as .mp3.",
       "method":"rip",
-      "intro_filename":"Church intro.wav"
+      "intro_filename":"Church intro.wav",
+      "outro_filename":"Outro_Jul23.wav"
     },
     {
       "idx":2,
@@ -41,13 +42,15 @@
     },
     {
       "idx":1,
-      "name":"Podbean",
+      "name":"Podbean_dev",
       "description":"Upload podcast to Podbean",
       "url_token":"https://api.podbean.com/v1/oauth/token",
       "url_upload":"https://api.podbean.com/v1/files/uploadAuthorize",
       "url_episode":"https://api.podbean.com/v1/episodes",
-      "client_id":3,
-      "client_secret":4,
+      "_comment1": "For development: client_id:3 and client_secret:4",
+      "_comment2": "For production: client_id:5 and client_secret:6",
+      "client_id":5,
+      "client_secret":6,
       "class":"Podbean"
     }
   ]

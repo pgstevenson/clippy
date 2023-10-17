@@ -58,7 +58,9 @@ match episode["t"]:
     case 1:
         intro_path = etl["transform"][1]["intro_filename"]
         intro_path = os.path.join(secrets["2"], intro_path)
-        clip.rip(intro_path)
+        outro_path = etl["transform"][1]["outro_filename"]
+        outro_path = os.path.join(secrets["2"], outro_path)
+        clip.rip(intro_path, outro_path)
     case 2:
         clip.crop()
     case 3:
@@ -74,9 +76,9 @@ match episode["l"]:
     case 1:
         if not os.path.isfile(clip.uri_mp3):
             exit("Load: Podbean: mp3 file does not exist.")
-        uri_logo = os.path.join(secrets["2"], episode["episode_logo"])
-        if not os.path.isfile(uri_logo):
-            exit("Load: Podbean: Logo does not exist.")
+        # uri_logo = os.path.join(secrets["2"], episode["episode_logo"])
+        # if not os.path.isfile(uri_logo):
+        #     exit("Load: Podbean: Logo does not exist.")
         uri_content = os.path.join(secrets["2"], episode["content"])
         if os.path.isfile(uri_content):
             with open(uri_content) as f:
@@ -93,7 +95,8 @@ match episode["l"]:
                           episode["title"],
                           content,
                           episode["status"],
-                          episode["type"])
+                          episode["type"],
+                          episode["logo_url"])
 
         load.request_token()
 
@@ -101,15 +104,15 @@ match episode["l"]:
         load.media_key = media["file_key"]
         cl.upload(media["presigned_url"], clip.uri_mp3, "audio/mpeg")
 
-        if bool(re.match("^.*jp(g|eg)$", uri_logo)):
-            logo = load.upload_auth(uri_logo, "image/jpeg")
-            load.logo_key = logo["file_key"]
-            cl.upload(logo["presigned_url"], uri_logo, "image/jpeg")
+        # if bool(re.match("^.*jp(g|eg)$", uri_logo)):
+        #     logo = load.upload_auth(uri_logo, "image/jpeg")
+        #     load.logo_key = logo["file_key"]
+        #     cl.upload(logo["presigned_url"], uri_logo, "image/jpeg")
 
-        if bool(re.match("^.*png$", uri_logo)):
-            logo = load.upload_auth(uri_logo, "image/png")
-            load.logo_key = logo["file_key"]
-            cl.upload(logo["presigned_url"], uri_logo, "image/png")
+        # if bool(re.match("^.*png$", uri_logo)):
+        #     logo = load.upload_auth(uri_logo, "image/png")
+        #     load.logo_key = logo["file_key"]
+        #     cl.upload(logo["presigned_url"], uri_logo, "image/png")
 
         load.publish()
 
