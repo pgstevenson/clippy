@@ -26,15 +26,11 @@ class Clip:
 
     @property
     def uri_out(self):
-        return os.path.join(self.out_location, self.id)
+        return self.out_location
 
     @property
     def uri_mp3(self):
         return os.path.join(self.uri_out, self.id + ".mp3")
-
-    @property
-    def uri_mp4(self):
-        return os.path.join(self.uri_out, self.id + ".mp4")
 
     @property
     def start_timestamp(self):
@@ -44,37 +40,13 @@ class Clip:
     def end_timestamp(self):
         return parse_time(self.end)
 
-    def create_directory(self):
-        if os.path.exists(self.uri_out):
-            print(f"Output directory '{self.id}' is not empty, continue? [Enter 'y' for yes.]")
-            fl = input()
-            if not (fl in ["Y", "y"] or len(fl) == 0):
-                exit()
-            rmtree(self.uri_out)
-        if not os.path.exists(self.uri_out):
-            os.mkdir(self.uri_out)
-
-    def clip(self):
-        x = VideoFileClip(self.uri_in)
-        return x.subclip(self.start_timestamp, self.end_timestamp)  # seconds
-
-    def crop(self):
-        self.create_directory()
-        self.clip().write_videofile(self.uri_mp4)
-        return 99
-
     def rip(self, intro_path, outro_path):
-        self.create_directory()
-        intro_clip = AudioFileClip(intro_path)
-        outro_clip = AudioFileClip(outro_path)
-        concat = concatenate_audioclips([intro_clip, self.clip().audio, outro_clip])
+        clip = VideoFileClip(self.uri_in)
+        concat = concatenate_audioclips([AudioFileClip(intro_path),
+                                         clip.subclip(self.start_timestamp, self.end_timestamp).audio,
+                                         AudioFileClip(outro_path)])
         concat.write_audiofile(self.uri_mp3)
-        return 99
-
-    def crop_and_rip(self):
-        self.create_directory()
-        self.clip().audio.write_audiofile(self.uri_mp3)
-        self.clip().write_videofile(self.uri_mp4)
+        clip.close()
         return 99
 
 

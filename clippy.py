@@ -1,10 +1,12 @@
 import argparse
-import classes as cl
 import json
-import pathlib
 import os
+import pathlib
 import re
 from sys import exit
+import uuid
+
+import classes as cl
 
 
 def validate_timestamp(x) -> bool:
@@ -18,9 +20,10 @@ args = parser.parse_args()
 config = vars(args)
 
 if config["json"] is None:
-    exit("Missing input JSON parameters.")
+    exit("Missing input JSON path.")
 
-episode = json.loads(config["json"])
+f = open(config["json"])
+episode = json.load(f)
 episode["t"] = int(episode["t"])
 episode["l"] = int(episode["l"])
 
@@ -36,7 +39,7 @@ f.close()
 
 # Extract
 
-clip = cl.Clip(episode["id"],
+clip = cl.Clip(str(uuid.uuid1()).upper(),
                secrets["0"],
                episode["filename"],
                secrets["1"],
@@ -61,10 +64,6 @@ match episode["t"]:
         outro_path = etl["transform"][1]["outro_filename"]
         outro_path = os.path.join(secrets["2"], outro_path)
         clip.rip(intro_path, outro_path)
-    case 2:
-        clip.crop()
-    case 3:
-        clip.crop_and_rip()
     case _:
         exit("Not a valid transform 't' method.")
 
@@ -76,9 +75,6 @@ match episode["l"]:
     case 1:
         if not os.path.isfile(clip.uri_mp3):
             exit("Load: Podbean: mp3 file does not exist.")
-        # uri_logo = os.path.join(secrets["2"], episode["episode_logo"])
-        # if not os.path.isfile(uri_logo):
-        #     exit("Load: Podbean: Logo does not exist.")
         uri_content = os.path.join(secrets["2"], episode["content"])
         if os.path.isfile(uri_content):
             with open(uri_content) as f:
@@ -104,17 +100,14 @@ match episode["l"]:
         load.media_key = media["file_key"]
         cl.upload(media["presigned_url"], clip.uri_mp3, "audio/mpeg")
 
-        # if bool(re.match("^.*jp(g|eg)$", uri_logo)):
-        #     logo = load.upload_auth(uri_logo, "image/jpeg")
-        #     load.logo_key = logo["file_key"]
-        #     cl.upload(logo["presigned_url"], uri_logo, "image/jpeg")
-
-        # if bool(re.match("^.*png$", uri_logo)):
-        #     logo = load.upload_auth(uri_logo, "image/png")
-        #     load.logo_key = logo["file_key"]
-        #     cl.upload(logo["presigned_url"], uri_logo, "image/png")
-
         load.publish()
 
     case _:
         exit("Not a valid load 'l' method.")
+
+# Clean up TMP files
+
+if os.path.isfile(clip.uri_mp3):
+    os.remove(clip.uri_mp3)
+if os.path.isfile(config["json"]):
+    os.remove(config["json"])

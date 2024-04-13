@@ -20,18 +20,6 @@
       "method":"rip",
       "intro_filename":"Church intro.wav",
       "outro_filename":"Outro_Jul23.wav"
-    },
-    {
-      "idx":2,
-      "name":"mp4",
-      "description":"Saves the video as a .mp4 file.",
-      "method":"crop"
-    },
-    {
-      "idx":3,
-      "name":"mp3-4",
-      "description":"Saves the video as a .mp4 file and also rips the audio and saves as .mp3.",
-      "method":"cropAndRip"
     }
   ],
   "load":[
