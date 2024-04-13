@@ -59,7 +59,7 @@ man/*.html
 man/*.pdf
 man/*.pptx
 clips.xlsm
-
+.vs/*
 
 # Do not ignore #
 #################
